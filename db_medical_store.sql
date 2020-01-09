@@ -197,6 +197,7 @@ create table t_approvisionnement
 	code_produit nvarchar(50),
 	code_fournisseur nvarchar(50),
 	code_depot nvarchar(50),
+    ugs nvarchar ----unite de gestion de stock, milligrammes
 	quantite int,
 	cout_total decimal(18,0),
 	
@@ -320,6 +321,7 @@ create table t_confirmation_reception
 	num_distribution int,
 	date_confirmation date,
 	qte_recue decimal,
+    observations nvarchar(500),
 	constraint pk_confirmation primary key(num_confirmation),
 	constraint fk_conf_distr foreign key(num_distribution) references t_distribution (num_distribution) on delete cascade on update cascade
 );
