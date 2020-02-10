@@ -197,8 +197,8 @@ create table t_approvisionnement
 	code_produit nvarchar(50),
 	code_fournisseur nvarchar(50),
 	code_depot nvarchar(50),
-    ugs nvarchar ----unite de gestion de stock, milligrammes
-	quantite int,
+    ugs nvarchar, ----unite de gestion de stock, milligrammes
+	quantite float, ----je change int en float pour les quantites comme 1/2 ou 1/4
 	cout_total decimal(18,0),
 	
  constraint pk_approvisionnement primary key(code_approvisionnement),
@@ -270,7 +270,7 @@ create procedure recuperer_ville_parID_province
 as
 select id_ville from t_ville
 	where
-		id_province like id_province
+		id_province like @id_province
 order by id_ville asc
 go
 create procedure recuperer_zone_parID_ville
@@ -364,7 +364,7 @@ GO
 
 create procedure afficher_approvisionnement
 as
-select top 500 code_approvisionnement as 'Code', date_approvisionnement as 'Date', code_equipement as 'Equipement', code_fournisseur as 'Fournisseur', code_depot as 'Depot', quantite as 'Qte', cout_total as 'Prix'
+select top 500 code_approvisionnement as 'Code', date_approvisionnement as 'Date', code_fournisseur as 'Fournisseur', code_depot as 'Depot', quantite as 'Qte', cout_total as 'Prix'
 	from t_approvisionnement
 		order by date_approvisionnement desc, code_approvisionnement desc
 
@@ -604,14 +604,13 @@ create procedure inserer_approvisionnement
 		when matched then
 			update set
 				date_approvisionnement=@date_approvisionnement,
-				code_equipement=@code_equipement,
 				code_fournisseur=@code_fournisseur,
 				code_depot=@code_depot,
 				quantite=@quantite,
 				cout_total=@cout_total
 		when not matched then
-			insert (code_approvisionnement, date_approvisionnement, code_equipement, code_fournisseur, code_depot, quantite, cout_total)
-			values (@code_approvisionnement, @date_approvisionnement, @code_equipement, @code_fournisseur, @code_depot, @quantite, @cout_total);
+			insert (code_approvisionnement, date_approvisionnement, code_fournisseur, code_depot, quantite, cout_total)
+			values (@code_approvisionnement, @date_approvisionnement, @code_fournisseur, @code_depot, @quantite, @cout_total);
 
 
 go
@@ -663,14 +662,15 @@ create procedure rechercher_approvisionnement_entre_date
 go
 /****** Object:  StoredProcedure rechercher_approvisionnement_par_equipement     ******/
 
-create procedure rechercher_approvisionnement_par_equipement
+-----NO EQUIPEMENT
+/*create procedure rechercher_approvisionnement_par_equipement
 	@code_equipement nvarchar(50)
 	as
 	select top 500 code_approvisionnement, date_approvisionnement, code_equipement, code_fournisseur, code_depot, quantite, cout_total
 		from t_approvisionnement
 			where code_equipement=@code_equipement
 				order by date_approvisionnement desc
-
+*/
 
 go
 /****** Object:  StoredProcedure rechercher_demande_date     ******/
@@ -736,33 +736,39 @@ create procedure rechercher_login
 go
 /****** Object:  StoredProcedure recuperer_nom_equipement     ******/
 
-create procedure recuperer_nom_equipement
+-------NO EQUIPEMENT
+/*create procedure recuperer_nom_equipement
 @code_approvisionnement nvarchar(50)
 as
 	select code_equipement from t_approvisionnement
 	where code_approvisionnement=@code_approvisionnement
-
+*/
 
 go
 /****** Object:  StoredProcedure select_equipement     ******/
 
+----NO EQUIPEMENT
+/*
 create procedure select_equipement
 @code_approvisionnement nvarchar(50)
 as
 	select code_equipement from t_approvisionnement
 	where code_approvisionnement=@code_approvisionnement
-
+*/
 
 go
 /****** Object:  StoredProcedure somme_entrees     ******/
 
+
+------NO EQUIPEMENT
+/*
 create procedure somme_entrees
 @code_equipement nvarchar(50)
 as
 	select sum (quantite) as total_entree
 		from t_approvisionnement
 	where code_equipement = @code_equipement
-
+*/
 
 go
 /****** Object:  StoredProcedure somme_sorties     ******/
@@ -877,7 +883,7 @@ create table t_stock
 	constraint pk_stock primary key(numero)
 )
 go
-alter procedure rechercher_stock
+create procedure rechercher_stock
 as
 	select top 500
 		date_stock,
