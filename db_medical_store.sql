@@ -698,6 +698,9 @@ create procedure rechercher_depot
 go
 /****** Object:  StoredProcedure rechercher_equipement     ******/
 
+
+-------NO EQUIPEMENT
+/*
 create procedure rechercher_equipement
 	@code_equipement nvarchar(50)
 	as
@@ -705,7 +708,7 @@ create procedure rechercher_equipement
 			where code_equipement like '%'+@code_equipement+'%' 
 				order by designation_equipement asc
 
-
+*/
 go
 
 create procedure rechercher_fournisseur
@@ -822,12 +825,15 @@ create procedure supprimer_depot
 go
 /****** Object:  StoredProcedure supprimer_equipement     ******/
 
+
+-------NO EQUIPEMENT
+/*
 create procedure supprimer_equipement
 	@code_equipement nvarchar(50)
 	as
 		delete from t_equipement
 			where code_equipement like @code_equipement
-
+*/
 
 go
 /****** Object:  StoredProcedure supprimer_fournisseur     ******/
