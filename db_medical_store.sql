@@ -159,9 +159,10 @@ create procedure recuperer_zone
 as
 	select id_zone from t_zone	
 		order by id_zone asc
-go
+
 -----------------------------------Fin Codes Zone--------------------------------------------------
 -----------------------------------Debut Codes Structure-------------------------------------------
+go
 create table t_structure
 (
 	id_structure nvarchar(50),
@@ -175,8 +176,8 @@ create table t_structure
 
 ----------------- procedure afficher_structure
 
-	go
-	create procedure afficher_structure
+go
+create procedure afficher_structure
 as
 	select top 50 id_structure as 'ID Structure', descr_structure as 'description', adresse as 'adresse', telephone as 'telephone', id_zone as 'Zone de Sante'  
 	from t_structure
@@ -352,11 +353,6 @@ as
 			code_produit=@code_produit
 
 ------------------------------------------------------fin codes produits
-
-
-
-
-
 
 /****** Object:  Table t_depot     ******/
 go
@@ -702,7 +698,7 @@ as
 -----------------------------------Fin des codes de la commande-----------------------------------------------------------
 
 /****** Object:  Table t_attribution_facture    ******/
-
+go
 create table t_transporteur
 (
 	code_transporteur nvarchar(50),
@@ -712,7 +708,7 @@ create table t_transporteur
 	constraint pk_transporteur primary key(code_transporteur)
 );
 
-
+go
 create table t_distribution
 	(
 		num_distribution int identity,
