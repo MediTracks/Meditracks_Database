@@ -231,113 +231,16 @@ as
 
 -----------------------------les recherches structures-zone-ville
 
-<<<<<<< HEAD
-create table t_fournisseur
-	(
-	code_fournisseur nvarchar(50),
-	noms_fournisseur nvarchar(50),
-	adresse_fournisseur nvarchar(50),
-	telephone_fournisseur nvarchar(50),
-	mail_fournisseur nvarchar(50),
- constraint pk_fournisseur primary key (code_fournisseur)
- )
-go
-/****** Object:  Table t_approvisionnement  ******/
-create table t_approvisionnement
-	(
-	code_approvisionnement nvarchar(50),
-	date_approvisionnement date,
-	date_fabrication date,
-	date_expiration date,
-	code_produit nvarchar(50),
-	code_fournisseur nvarchar(50),
-	code_depot nvarchar(50),
-    ugs nvarchar, ----unite de gestion de stock, milligrammes
-	quantite float, ----je change int en float pour les quantites comme 1/2 ou 1/4
-	cout_total decimal(18,0),
-	
- constraint pk_approvisionnement primary key(code_approvisionnement),
- constraint fk_produit_approv foreign key(code_produit) references t_produit(code_produit),
- constraint fk_fournisseur_approv foreign key(code_fournisseur) references t_fournisseur(code_fournisseur),
- constraint fk_depot_approv foreign key(code_depot) references t_depot(code_depot)
-)
-go
-/****** Object:  Table t_demande     ******/
-------------------------------------Debut codes de la commande-------------------------------------------------------------
-create table t_commandes
-	(
-	num_commande int identity,
-	concerne_commande nvarchar(50),
-	date_commande date,
-    id_structure nvarchar(50),
-    constraint pk_commande primary key (num_commande),
-	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
-)
-go
-create procedure afficher_commande
-as
-select top 50 
-	num_commande as 'num cmd',
-	concerne_commande as 'Description de la commande',
-	date_commande as 'Date',
-	id_structure as 'Structure San.'
-from t_commandes
-	order by [num cmd] desc
-go
-create procedure inserer_commande
-@concerne_commande nvarchar(50),
-@date_commande date,
-@id_structure nvarchar(50)
-as
-	insert into t_commandes
-		(concerne_commande, date_commande, id_structure)
-	values
-		(@concerne_commande, @date_commande, @id_structure)
-go
-create procedure modifier_commande
-@num_commande int,
-@concerne_commande nvarchar(50),
-@date_commande date,
-@id_structure nvarchar(50)
-as
-	update t_commandes
-		set
-			concerne_commande=@concerne_commande,
-			date_commande=@date_commande,
-			id_structure=@id_structure
-		where
-			num_commande=@num_commande
-go
-create procedure supprimer_commande
-@num_commande int
-as
-	delete from t_commandes
-		where
-			num_commande=@num_commande
-go
-create procedure recuperer_province
-as
-select id_province from t_province
-order by id_province asc
-=======
->>>>>>> pr/5
 go
 create procedure recuperer_ville_parID_province
 @id_province nvarchar(50)
 as
-<<<<<<< HEAD
-select id_ville from t_ville
-	where
-		id_province like @id_province
-order by id_ville asc
-=======
 	select id_ville from t_ville
 		where
 			id_province like id_province
 				order by id_ville asc
 
 -------------------------------
->>>>>>> pr/5
 go
 create procedure recuperer_zone_parID_ville
 @id_ville nvarchar(50)
@@ -415,15 +318,7 @@ create table t_produit
 	constraint fk_categorie_prod foreign key(code_categorie) references t_categorie_prod(code_categorie) on delete cascade on update cascade
 )
 
-<<<<<<< HEAD
-create procedure afficher_approvisionnement
-as
-select top 500 code_approvisionnement as 'Code', date_approvisionnement as 'Date', code_fournisseur as 'Fournisseur', code_depot as 'Depot', quantite as 'Qte', cout_total as 'Prix'
-	from t_approvisionnement
-		order by date_approvisionnement desc, code_approvisionnement desc
-=======
 ------------ procedure enregistrer_produit
->>>>>>> pr/5
 
 go
 create procedure enregistrer_produit
@@ -688,25 +583,6 @@ create procedure inserer_approvisionnement
 		when not matched then
 			insert (code_approvisionnement, date_approvisionnement, code_fournisseur, code_depot, quantite, cout_total)
 			values (@code_approvisionnement, @date_approvisionnement, @code_fournisseur, @code_depot, @quantite, @cout_total);
-<<<<<<< HEAD
-
-
-go
-/****** Object:  StoredProcedure liste_equipement_recus_entre_dates     ******/
-
-create procedure liste_equipement_recus_entre_dates
-@date_un date,
-@date_deux date
-as
-SELECT        t_equipement.code_equipement, t_equipement.designation_equipement, t_approvisionnement.date_approvisionnement, t_approvisionnement.quantite, t_approvisionnement.cout_total, 
-                         t_approvisionnement.code_depot, t_approvisionnement.code_fournisseur
-FROM            t_equipement inner join
-                         t_approvisionnement on t_equipement.code_equipement = t_approvisionnement.code_equipement inner join
-                         t_fournisseur on t_approvisionnement.code_fournisseur = t_fournisseur.code_fournisseur inner join
-                         t_depot on t_approvisionnement.code_depot = t_depot.code_depot
-			where t_approvisionnement.date_approvisionnement between @date_un and @date_deux
-=======
->>>>>>> pr/5
 
 
 
@@ -732,24 +608,9 @@ create procedure rechercher_approvisionnement_entre_date
 			order by code_approvisionnement desc
 
 
-<<<<<<< HEAD
-go
-/****** Object:  StoredProcedure rechercher_approvisionnement_par_equipement     ******/
-
------NO EQUIPEMENT
-/*create procedure rechercher_approvisionnement_par_equipement
-	@code_equipement nvarchar(50)
-	as
-	select top 500 code_approvisionnement, date_approvisionnement, code_equipement, code_fournisseur, code_depot, quantite, cout_total
-		from t_approvisionnement
-			where code_equipement=@code_equipement
-				order by date_approvisionnement desc
-*/
-=======
 
 GO
 /****** Object:  StoredProcedure afficher_approvisionnement     ******/
->>>>>>> pr/5
 
 create procedure afficher_approvisionnement
 as
@@ -769,24 +630,10 @@ as
 	from t_approvisionnement
 	order by code_approvisionnement desc
 
-<<<<<<< HEAD
-
--------NO EQUIPEMENT
-/*
-create procedure rechercher_equipement
-	@code_equipement nvarchar(50)
-	as
-		select * from t_equipement
-			where code_equipement like '%'+@code_equipement+'%' 
-				order by designation_equipement asc
-
-*/
-=======
 --------------------------------------------------------------fin codes approvisionnement------------------------------------------
 
 ------------------------------------Debut codes de la commande-------------------------------------------------------------
 
->>>>>>> pr/5
 go
 create table t_commandes
 	(
@@ -810,43 +657,6 @@ select top 50
 
 ---------------------------------------
 go
-<<<<<<< HEAD
-/****** Object:  StoredProcedure recuperer_nom_equipement     ******/
-
--------NO EQUIPEMENT
-/*create procedure recuperer_nom_equipement
-@code_approvisionnement nvarchar(50)
-as
-	select code_equipement from t_approvisionnement
-	where code_approvisionnement=@code_approvisionnement
-*/
-
-go
-/****** Object:  StoredProcedure select_equipement     ******/
-
-----NO EQUIPEMENT
-/*
-create procedure select_equipement
-@code_approvisionnement nvarchar(50)
-as
-	select code_equipement from t_approvisionnement
-	where code_approvisionnement=@code_approvisionnement
-*/
-
-go
-/****** Object:  StoredProcedure somme_entrees     ******/
-
-
-------NO EQUIPEMENT
-/*
-create procedure somme_entrees
-@code_equipement nvarchar(50)
-as
-	select sum (quantite) as total_entree
-		from t_approvisionnement
-	where code_equipement = @code_equipement
-*/
-=======
 create procedure inserer_commande
 @concerne_commande nvarchar(50),
 @date_commande date,
@@ -886,7 +696,6 @@ as
 
 	
 -----------------------------------Fin des codes de la commande-----------------------------------------------------------
->>>>>>> pr/5
 
 /****** Object:  Table t_attribution_facture    ******/
 go
@@ -964,24 +773,12 @@ create procedure enregistrer_login
 go
 /****** Object:  StoredProcedure supprimer_login     ******/
 
-<<<<<<< HEAD
-
--------NO EQUIPEMENT
-/*
-create procedure supprimer_equipement
-	@code_equipement nvarchar(50)
-	as
-		delete from t_equipement
-			where code_equipement like @code_equipement
-*/
-=======
 create procedure supprimer_login
 	@nom_utilisateur nvarchar(50)
 	as
 	delete from t_login
 		where nom_utilisateur=@nom_utilisateur;
 
->>>>>>> pr/5
 
 go
 /****** Object:  StoredProcedure rechercher_login     ******/
