@@ -548,7 +548,7 @@ create table t_approvisionnement
 	code_fournisseur nvarchar(50),
 	code_depot nvarchar(50),
     ugs nvarchar, ----unite de gestion de stock, milligrammes
-	quantite float,
+	quantite int,
 	cout_total decimal(18,0),
 	
  constraint pk_approvisionnement primary key(code_approvisionnement),
