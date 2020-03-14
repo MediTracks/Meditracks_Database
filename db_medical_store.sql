@@ -640,9 +640,10 @@ create table t_commandes
 	num_commande int identity,
 	code_produit nvarchar(50),
 	qte decimal,
+	alerte_level nvarchar(50),------- critique,
 	date_commande date,
-    id_structure nvarchar(50),
-    constraint pk_commande primary key (num_commande),
+  id_structure nvarchar(50),
+  constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
 go
@@ -791,13 +792,10 @@ create procedure rechercher_login
 	select niveau_acces from t_login 
 		where nom_utilisateur 
 			like @nom_utilisateur and mot_de_passe=@mot_de_passe
-
-
+go
 -------------------------------------------------------- fin Codes Login-----------------------------------------------------------
 
 ----------------------------------------------------Codes facture--------------------------------------------------------------------
-
-go
 create procedure rechercher_facure
 @code_facture nvarchar(50)
 as
@@ -852,16 +850,5 @@ as
 		stock_final
 	from t_stock
 		order by date_stock desc, designation desc
-
-
-------------------------------------partie insertion_stock
-
 go
-insert into t_stock
-	(date_stock,designation,stock_initial,qte_entree,qte_sortie,stock_final)
-values
-	('2017/09/22','DECODEUR SX310',10,5,3,12),
-	('2017/09/23','TELECOMMANDE SX310',20,5,3,22),
-	('2017/09/23','DECODEUR SX310',12,2,3,11)
-
 --------------------------------------------------- fin codes stock----------------------------------------------------------
