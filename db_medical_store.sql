@@ -638,7 +638,8 @@ go
 create table t_commandes
 	(
 	num_commande int identity,
-	concerne_commande nvarchar(50),
+	code_produit nvarchar(50),
+	qte decimal,
 	date_commande date,
     id_structure nvarchar(50),
     constraint pk_commande primary key (num_commande),
