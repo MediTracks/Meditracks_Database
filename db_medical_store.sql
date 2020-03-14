@@ -638,11 +638,12 @@ go
 create table t_commandes
 	(
 	num_commande int identity,
-	concerne_commande nvarchar(50),
-	alerte_level nvarchar(50),------- critique, 
+	code_produit nvarchar(50),
+	qte decimal,
+	alerte_level nvarchar(50),------- critique,
 	date_commande date,
-    id_structure nvarchar(50),
-    constraint pk_commande primary key (num_commande),
+  id_structure nvarchar(50),
+  constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
 go
