@@ -131,8 +131,9 @@ create procedure enregistrer_zone
 @descr_zone nvarchar(50),
 @adresse nvarchar(100),
 @telephone nvarchar(50),
-@id_ville nvarchar(50)
+@ville nvarchar(50)
 as
+	declare @id_ville nvarchar(50) = (select id_ville from t_ville where description_ville = @ville)
 	merge into t_zone
 	using (select @id_zone as x_id) as x_source
 		on(x_source.x_id = t_zone.id_zone)
@@ -191,8 +192,9 @@ create procedure enregistrer_structure
 @descr_structure nvarchar(50),
 @adresse nvarchar(50),
 @telephone nvarchar(50),
-@id_zone nvarchar(50)
+@zone nvarchar(50)
 as
+	declare @id_zone nvarchar(50) = (select id_zone from t_zone where descr_zone = @zone)
 	merge into t_structure
 	using (select @id_structure as x_id) as x_source
 		on(x_source.x_id = t_structure.id_structure)
@@ -646,45 +648,24 @@ create table t_commandes
   constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
-go
-create procedure afficher_commande
-as
-select top 50 
-	num_commande as 'num cmd',
-	concerne_commande as 'Description de la commande',
-	date_commande as 'Date',
-	id_structure as 'Structure San.'
-		from t_commandes
-			order by [num cmd] desc
+
 
 ---------------------------------------
 go
 create procedure inserer_commande
-@concerne_commande nvarchar(50),
+@code_produit nvarchar(50),
+@qte decimal,
+@alerte_level nvarchar(50),
 @date_commande date,
 @id_structure nvarchar(50)
 as
 	insert into t_commandes
-		(concerne_commande, date_commande, id_structure)
+		(code_produit, qte, alerte_level, date_commande, id_structure)
 	values
-		(@concerne_commande, @date_commande, @id_structure)
+		(@code_produit, @qte, @alerte_level, @date_commande, @id_structure)
 
 ----------------------------------------
 
-go
-create procedure modifier_commande
-@num_commande int,
-@concerne_commande nvarchar(50),
-@date_commande date,
-@id_structure nvarchar(50)
-as
-	update t_commandes
-		set
-			concerne_commande=@concerne_commande,
-			date_commande=@date_commande,
-			id_structure=@id_structure
-		where
-			num_commande=@num_commande
 
 --------------------------------------------
 
@@ -709,6 +690,18 @@ create table t_transporteur
 	adresse_transporteur nvarchar(50),
 	constraint pk_transporteur primary key(code_transporteur)
 );
+
+go
+create procedure enregistrer_transporteur
+	@code_transporteur nvarchar(50),
+	@descr_transporteur nvarchar(50),
+	@num_phone nvarchar(50),
+	@adresse_transporteur nvarchar(50)
+as
+	insert into t_transporteur 
+		(code_transporteur, descr_transporteur, num_phone, adresse_transporteur)
+	values
+		(@code_transporteur, @descr_transporteur, @num_phone, @adresse_transporteur);
 
 go
 create table t_distribution
