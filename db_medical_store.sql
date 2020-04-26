@@ -836,7 +836,11 @@ create procedure inserer_stock
 @qte_sortie decimal,
 @stock_final decimal
 as
-	insert int
+	insert into t_stock
+		(date_stock, designation,stock_initial,qte_entree,qte_sortie,stock_final)
+	values
+		(getdate(), @designation, @stock_initial, @qte_entree, @qte_sortie, @stock_final)
+go
 -------------------------- procedure rechercher_stock
 
 go
