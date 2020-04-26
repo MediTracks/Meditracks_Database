@@ -841,6 +841,7 @@ as
 	values
 		(getdate(), @designation, @stock_initial, @qte_entree, @qte_sortie, @stock_final)
 go
+--------------------------Fin ajout stock informations -------------------------------------------------
 -------------------------- procedure rechercher_stock
 
 go
