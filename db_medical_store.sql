@@ -828,7 +828,15 @@ create table t_stock
 	stock_final decimal,
 	constraint pk_stock primary key(numero)
 )
-
+go----------------------------------------Debut insertion_stock-----------------------------------------
+create procedure inserer_stock
+@designation nvarchar(50),
+@stock_initial decimal,
+@qte_entree decimal,
+@qte_sortie decimal,
+@stock_final decimal
+as
+	insert int
 -------------------------- procedure rechercher_stock
 
 go
