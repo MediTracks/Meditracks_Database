@@ -138,7 +138,7 @@ as
 	using (select @id_zone as x_id) as x_source
 		on(x_source.x_id = t_zone.id_zone)
 			when matched then
-			 update set
+			 update set 
 				descr_zone=@descr_zone,
 				adresse=@adresse,
 				telephone=@telephone,
@@ -308,7 +308,25 @@ as
 	delete from t_categorie_prod
 		where
 			code_categorie=@code_categorie
+go
 -------------------------fin categorie_prod-------------------------------------
+------------------------Conditionnement produit---------------------------------
+create table t_conditionnement
+(
+	id_conditionnement nvarchar(50),
+	description_condition nvarchar(100),
+	constraint pk_conditionnement primary key(id_conditionnement)
+)
+go
+create table t_forme
+(
+	id_forme nvarchar(50),
+	description_forme nvarchar(100),
+	constraint pk_forme primary key(id_forme)
+)
+go
+create table 
+
 --------------------------------------------------------- Codes produit------------------------------------------------
 go
 create table t_produit
@@ -644,7 +662,8 @@ create table t_commandes
 	qte decimal,
 	alerte_level nvarchar(50),------- critique,
 	date_commande date,
-  id_structure nvarchar(50),
+	id_structure nvarchar(50),
+	id_status nvarchar(50),
   constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
