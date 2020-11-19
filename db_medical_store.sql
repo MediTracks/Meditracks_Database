@@ -2,12 +2,12 @@
 /****** Object:  Table t_client    Script Date: 14/09/2017 03:36:50 ******/
 use master
 go
-if exists(select * from sys.databases where name='db_medical_store')
-drop database db_medical_store
+if exists(select * from sys.databases where name='db_meditracks')
+drop database db_meditracks
 go
-create database db_medical_store
+create database db_meditracks
 go
-use db_medical_store
+use db_meditracks
 
 --------------------------------------------- Codes Province --------------------------------------------------------
 go
@@ -160,10 +160,10 @@ create procedure recuperer_zone
 as
 	select id_zone from t_zone	
 		order by id_zone asc
-
+go
 -----------------------------------Fin Codes Zone--------------------------------------------------
 -----------------------------------Debut Codes Structure-------------------------------------------
-go
+
 create table t_structure
 (
 	id_structure nvarchar(50),
@@ -325,8 +325,13 @@ create table t_forme
 	constraint pk_forme primary key(id_forme)
 )
 go
-create table 
-
+create table t_projet
+(
+	id_projet nvarchar(50),
+	description_projet nvarchar(100),
+	constraint pk_projet primary key(id_projet)
+)
+go
 --------------------------------------------------------- Codes produit------------------------------------------------
 go
 create table t_produit
@@ -375,6 +380,14 @@ as
 ------------------------------------------------------fin codes produits
 
 /****** Object:  Table t_depot     ******/
+go
+create table t_affectation_projet
+(
+	num_affectation int,
+	id_projet nvarchar(50),
+	code_produit nvarchar(50),
+	constraint pk_affectation primary key(num_affectation)
+)
 go
 create table t_depot
 (
@@ -567,7 +580,7 @@ create table t_approvisionnement
 	code_produit nvarchar(50),
 	code_fournisseur nvarchar(50),
 	code_depot nvarchar(50),
-    ugs nvarchar, ----unite de gestion de stock, milligrammes
+    ugs nvarchar(50), ----unite de gestion de stock, milligrammes
 	quantite int,
 	cout_total decimal(18,0),
 	
@@ -584,35 +597,39 @@ go
 create procedure inserer_approvisionnement
 	@code_approvisionnement nvarchar(50),
 	@date_approvisionnement date,
+	@date_fabrication date,
+	@date_expiration date,
+	@code_produit nvarchar(50),
 	@code_fournisseur nvarchar(50),
 	@code_depot nvarchar(50),
+    @ugs nvarchar(50), ----unite de gestion de stock, milligrammes
 	@quantite int,
-	@cout_total decimal
+	@cout_total decimal(18,0)
 	as
 		merge t_approvisionnement
-		using (select @code_approvisionnement, @date_approvisionnement, @code_fournisseur, @code_depot, @quantite, @cout_total) 
-			as xapprovisionnement(xcode_approvisionnement, xdate_approvisionnement, xcode_fournisseur, xcode_depot, xquantite, xcout_total)
+		using (select @code_approvisionnement, @date_approvisionnement, @date_fabrication, @date_expiration, @code_produit, @code_fournisseur, @code_depot, @ugs, @quantite, @cout_total) 
+			as xapprovisionnement(xcode_approvisionnement, xdate_approvisionnement, xdate_fabrication, xdate_expiration, xcode_produit, xcode_fournisseur, xcode_depot, xugs, xquantite, xcout_total)
 		on(t_approvisionnement.code_approvisionnement=xapprovisionnement.xcode_approvisionnement)
 		when matched then
-			update set
-				date_approvisionnement=@date_approvisionnement,
-				code_fournisseur=@code_fournisseur,
-				code_depot=@code_depot,
-				quantite=@quantite,
+			update set 
+				date_approvisionnement=@date_approvisionnement, 
+				date_fabrication=@date_fabrication, 
+				date_expiration=@date_expiration, 
+				code_produit=@code_produit, 
+				code_fournisseur=@code_fournisseur, 
+				code_depot=@code_depot, 
+				ugs=@ugs, 
+				quantite=@quantite, 
 				cout_total=@cout_total
 		when not matched then
-			insert (code_approvisionnement, date_approvisionnement, code_fournisseur, code_depot, quantite, cout_total)
-			values (@code_approvisionnement, @date_approvisionnement, @code_fournisseur, @code_depot, @quantite, @cout_total);
-
-
-
-
+			insert (code_approvisionnement, date_approvisionnement, date_fabrication, date_expiration, code_produit, code_fournisseur, code_depot, ugs, quantite, cout_total)
+			values (@code_approvisionnement, @date_approvisionnement, @date_fabrication, @date_expiration, @code_produit, @code_fournisseur, @code_depot, @ugs, @quantite, @cout_total);
 go
 /****** Object:  StoredProcedure supprimer_approvisionnement     ******/
 
 create procedure supprimer_approvisionnement
 	@code_approvisionnement nvarchar(50)
-	as
+	as*******************************
 	delete from t_approvisionnement
 		where code_approvisionnement=@code_approvisionnement
 
