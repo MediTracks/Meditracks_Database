@@ -280,10 +280,8 @@ create table t_categorie_prod
 
 go
 create procedure enregistrer_categorie
-(
-	@code_categorie nvarchar(50),
-	@designation_categorie nvarchar(50)
-)
+@code_categorie nvarchar(50),
+@designation_categorie nvarchar(50)
 as
 begin
 	if not exists(select * from t_categorie_prod where code_categorie = @code_categorie)
@@ -339,8 +337,12 @@ create table t_produit
 	code_produit nvarchar(50),
 	designation_produit nvarchar(50),
 	code_categorie nvarchar(50),
+	id_forme nvarchar(50),
+	id_conditionnement nvarchar(50),
  	constraint pk_equipement primary key(code_produit),
-	constraint fk_categorie_prod foreign key(code_categorie) references t_categorie_prod(code_categorie) on delete cascade on update cascade
+	constraint fk_categorie_prod foreign key(code_categorie) references t_categorie_prod(code_categorie) on delete cascade on update cascade,
+	constraint fk_conditionnement foreign key(id_conditionnement) references t_conditionnement(id_conditionnement) on delete cascade on update cascade,
+	constraint fk_forme foreign key(id_forme) references t_forme(id_forme) on delete cascade on update cascade
 )
 
 ------------ procedure enregistrer_produit
@@ -350,13 +352,15 @@ create procedure enregistrer_produit
 (
 	@code_produit nvarchar(50),
 	@designation_produit nvarchar(50),
-	@categorie nvarchar(50)
+	@categorie nvarchar(50),
+	@id_forme nvarchar(50),
+	@id_conditionnement nvarchar(50)
 )
 as
 begin
 	declare @code_categorie nvarchar(50) = (select code_categorie from t_categorie_prod where designation_categorie = @categorie)
 	if not exists(select * from t_produit where code_produit = @code_produit)
-		insert into t_produit values (@code_produit, @designation_produit, @code_categorie)
+		insert into t_produit values (@code_produit, @designation_produit, @code_categorie,@id_forme,@id_conditionnement)
 	else
 		update t_produit set designation_produit = @designation_produit, code_categorie = @code_categorie where code_produit = @code_produit
 end
@@ -413,9 +417,6 @@ create procedure enregistrer_depot
 		when not matched then
 			insert (code_depot,designation_depot)
 			values(v_code_depot, v_designation_depot);
-
-
-
 go
 /****** Object:  StoredProcedure afficher_depot     ******/
 
@@ -776,7 +777,9 @@ create table t_login(
 	nom_utilisateur nvarchar(50),
 	mot_de_passe nvarchar(50),
 	niveau_acces nvarchar(50),
- constraint pk_login primary key(nom_utilisateur)
+	id_structure nvarchar(50)
+ constraint pk_login primary key(nom_utilisateur),
+ constraint fk_structure_login foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
  )
 
  
@@ -824,33 +827,7 @@ create procedure rechercher_login
 go
 -------------------------------------------------------- fin Codes Login-----------------------------------------------------------
 
-----------------------------------------------------Codes facture--------------------------------------------------------------------
-create procedure rechercher_facure
-@code_facture nvarchar(50)
-as
-select        
-	t_approvisionnement.date_approvisionnement, 
-	t_approvisionnement.code_approvisionnement, 
-    t_facture.code_facture, 
-	t_facture.date_facture, 
-	t_client.noms_client, 
-	t_details_facture.qte_vendue, 
-	t_details_facture.prix_unitaire, 
-	t_details_facture.prix_total
-from            
-	t_approvisionnement inner join t_details_facture on
-		t_approvisionnement.code_approvisionnement = t_details_facture.code_approvisionnement 
-		inner join
-        t_facture on t_details_facture.code_facture = t_facture.code_facture inner join
-                         t_equipement on t_approvisionnement.code_equipement = t_equipement.code_equipement inner join
-                         t_client on t_facture.matricule_client = t_client.matricule_client
-						 where t_facture.code_facture=@code_facture
-
-
-
-
------------------------------------------------- Codes stock -------------------------------------------
-
+----------------------------------------------------Codes facture------------------------------------------------------------------
 
 go
 create table t_stock
