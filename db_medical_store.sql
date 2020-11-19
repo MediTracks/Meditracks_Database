@@ -390,7 +390,9 @@ create table t_affectation_projet
 	num_affectation int,
 	id_projet nvarchar(50),
 	code_produit nvarchar(50),
-	constraint pk_affectation primary key(num_affectation)
+	constraint pk_affectation primary key(num_affectation),
+	constraint fk_affec_projet foreign key(id_projet) references t_projet(id_projet) on update cascade on delete cascade,
+	constraint fk_produit_affec foreign key(code_produit) references t_produit(code_produit) on update cascade on delete cascade
 )
 go
 create table t_depot
@@ -630,7 +632,7 @@ go
 
 create procedure supprimer_approvisionnement
 	@code_approvisionnement nvarchar(50)
-	as*******************************
+	as
 	delete from t_approvisionnement
 		where code_approvisionnement=@code_approvisionnement
 
