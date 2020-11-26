@@ -130,7 +130,7 @@ as
 	using (select @id_zone as x_id) as x_source
 		on(x_source.x_id = t_zone.id_zone)
 			when matched then
-			 update set
+			 update set 
 				descr_zone=@descr_zone,
 				adresse=@adresse,
 				telephone=@telephone,
@@ -152,10 +152,10 @@ create procedure recuperer_zone
 as
 	select id_zone from t_zone	
 		order by id_zone asc
-
+go
 -----------------------------------Fin Codes Zone--------------------------------------------------
 -----------------------------------Debut Codes Structure-------------------------------------------
-go
+
 create table t_structure
 (
 	id_structure nvarchar(50),
@@ -269,10 +269,8 @@ create table t_categorie_prod
 
 go
 create procedure enregistrer_categorie
-(
-	@code_categorie nvarchar(50),
-	@designation_categorie nvarchar(50)
-)
+@code_categorie nvarchar(50),
+@designation_categorie nvarchar(50)
 as
 begin
 	if not exists(select * from t_categorie_prod where code_categorie = @code_categorie)
@@ -297,7 +295,30 @@ as
 	delete from t_categorie_prod
 		where
 			code_categorie=@code_categorie
+go
 -------------------------fin categorie_prod-------------------------------------
+------------------------Conditionnement produit---------------------------------
+create table t_conditionnement
+(
+	id_conditionnement nvarchar(50),
+	description_condition nvarchar(100),
+	constraint pk_conditionnement primary key(id_conditionnement)
+)
+go
+create table t_forme
+(
+	id_forme nvarchar(50),
+	description_forme nvarchar(100),
+	constraint pk_forme primary key(id_forme)
+)
+go
+create table t_projet
+(
+	id_projet nvarchar(50),
+	description_projet nvarchar(100),
+	constraint pk_projet primary key(id_projet)
+)
+go
 --------------------------------------------------------- Codes produit------------------------------------------------
 go
 create table t_forme
@@ -327,8 +348,26 @@ create table t_produit
 	constraint fk_conditionnement foreign key(id_conditionnement) references t_conditionnement(id_conditionnement)
 )
  go
------------------- procedure recuperer_produit
+------------ procedure enregistrer_produit
 
+go
+create procedure enregistrer_produit
+(
+	@code_produit nvarchar(50),
+	@designation_produit nvarchar(50),
+	@categorie nvarchar(50),
+	@id_forme nvarchar(50),
+	@id_conditionnement nvarchar(50)
+)
+as
+begin
+	declare @code_categorie nvarchar(50) = (select code_categorie from t_categorie_prod where designation_categorie = @categorie)
+	if not exists(select * from t_produit where code_produit = @code_produit)
+		insert into t_produit values (@code_produit, @designation_produit, @code_categorie,@id_forme,@id_conditionnement)
+	else
+		update t_produit set designation_produit = @designation_produit, code_categorie = @code_categorie where code_produit = @code_produit
+end
+------------------ procedure recuperer_produit
 go
 create procedure recuperer_produit
 as
@@ -381,6 +420,16 @@ create table t_affectation_projet
 go
 /****** Object:  Table t_depot     ******/
 go
+create table t_affectation_projet
+(
+	num_affectation int,
+	id_projet nvarchar(50),
+	code_produit nvarchar(50),
+	constraint pk_affectation primary key(num_affectation),
+	constraint fk_affec_projet foreign key(id_projet) references t_projet(id_projet) on update cascade on delete cascade,
+	constraint fk_produit_affec foreign key(code_produit) references t_produit(code_produit) on update cascade on delete cascade
+)
+go
 create table t_depot
 (
 	code_depot nvarchar(50),
@@ -405,9 +454,6 @@ create procedure enregistrer_depot
 		when not matched then
 			insert (code_depot,designation_depot)
 			values(v_code_depot, v_designation_depot);
-
-
-
 go
 /****** Object:  StoredProcedure afficher_depot     ******/
 
@@ -564,7 +610,7 @@ create table t_approvisionnement
 	code_produit nvarchar(50),
 	code_fournisseur nvarchar(50),
 	code_depot nvarchar(50),
-    ugs nvarchar, ----unite de gestion de stock, milligrammes
+    ugs nvarchar(50), ----unite de gestion de stock, milligrammes
 	quantite int,
 	cout_total decimal(18,0),
 	
@@ -581,29 +627,33 @@ go
 create procedure inserer_approvisionnement
 	@code_approvisionnement nvarchar(50),
 	@date_approvisionnement date,
+	@date_fabrication date,
+	@date_expiration date,
+	@code_produit nvarchar(50),
 	@code_fournisseur nvarchar(50),
 	@code_depot nvarchar(50),
+    @ugs nvarchar(50), ----unite de gestion de stock, milligrammes
 	@quantite int,
-	@cout_total decimal
+	@cout_total decimal(18,0)
 	as
 		merge t_approvisionnement
-		using (select @code_approvisionnement, @date_approvisionnement, @code_fournisseur, @code_depot, @quantite, @cout_total) 
-			as xapprovisionnement(xcode_approvisionnement, xdate_approvisionnement, xcode_fournisseur, xcode_depot, xquantite, xcout_total)
+		using (select @code_approvisionnement, @date_approvisionnement, @date_fabrication, @date_expiration, @code_produit, @code_fournisseur, @code_depot, @ugs, @quantite, @cout_total) 
+			as xapprovisionnement(xcode_approvisionnement, xdate_approvisionnement, xdate_fabrication, xdate_expiration, xcode_produit, xcode_fournisseur, xcode_depot, xugs, xquantite, xcout_total)
 		on(t_approvisionnement.code_approvisionnement=xapprovisionnement.xcode_approvisionnement)
 		when matched then
-			update set
-				date_approvisionnement=@date_approvisionnement,
-				code_fournisseur=@code_fournisseur,
-				code_depot=@code_depot,
-				quantite=@quantite,
+			update set 
+				date_approvisionnement=@date_approvisionnement, 
+				date_fabrication=@date_fabrication, 
+				date_expiration=@date_expiration, 
+				code_produit=@code_produit, 
+				code_fournisseur=@code_fournisseur, 
+				code_depot=@code_depot, 
+				ugs=@ugs, 
+				quantite=@quantite, 
 				cout_total=@cout_total
 		when not matched then
-			insert (code_approvisionnement, date_approvisionnement, code_fournisseur, code_depot, quantite, cout_total)
-			values (@code_approvisionnement, @date_approvisionnement, @code_fournisseur, @code_depot, @quantite, @cout_total);
-
-
-
-
+			insert (code_approvisionnement, date_approvisionnement, date_fabrication, date_expiration, code_produit, code_fournisseur, code_depot, ugs, quantite, cout_total)
+			values (@code_approvisionnement, @date_approvisionnement, @date_fabrication, @date_expiration, @code_produit, @code_fournisseur, @code_depot, @ugs, @quantite, @cout_total);
 go
 /****** Object:  StoredProcedure supprimer_approvisionnement     ******/
 
@@ -757,9 +807,9 @@ create table t_login(
 	nom_utilisateur nvarchar(50),
 	mot_de_passe nvarchar(50),
 	niveau_acces nvarchar(50),
-	id_structure nvarchar(50),
+	id_structure nvarchar(50)
  constraint pk_login primary key(nom_utilisateur),
- constraint fk_strucutre foreign key(id_structure) references t_structure(id_structure)
+ constraint fk_structure_login foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
  )
  
 go
@@ -805,33 +855,7 @@ create procedure rechercher_login
 go
 -------------------------------------------------------- fin Codes Login-----------------------------------------------------------
 
-----------------------------------------------------Codes facture--------------------------------------------------------------------
-create procedure rechercher_facure
-@code_facture nvarchar(50)
-as
-select        
-	t_approvisionnement.date_approvisionnement, 
-	t_approvisionnement.code_approvisionnement, 
-    t_facture.code_facture, 
-	t_facture.date_facture, 
-	t_client.noms_client, 
-	t_details_facture.qte_vendue, 
-	t_details_facture.prix_unitaire, 
-	t_details_facture.prix_total
-from            
-	t_approvisionnement inner join t_details_facture on
-		t_approvisionnement.code_approvisionnement = t_details_facture.code_approvisionnement 
-		inner join
-        t_facture on t_details_facture.code_facture = t_facture.code_facture inner join
-                         t_equipement on t_approvisionnement.code_equipement = t_equipement.code_equipement inner join
-                         t_client on t_facture.matricule_client = t_client.matricule_client
-						 where t_facture.code_facture=@code_facture
-
-
-
-
------------------------------------------------- Codes stock -------------------------------------------
-
+----------------------------------------------------Codes facture------------------------------------------------------------------
 
 go
 create table t_stock
