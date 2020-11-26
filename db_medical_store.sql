@@ -1,13 +1,11 @@
-
-/****** Object:  Table t_client    Script Date: 14/09/2017 03:36:50 ******/
 use master
 go
-if exists(select * from sys.databases where name='db_medical_store')
-drop database db_medical_store
+if exists(select * from sys.databases where name='db_meditracks')
+drop database db_meditracks
 go
-create database db_medical_store
+create database db_meditracks
 go
-use db_medical_store
+use db_meditracks
 
 --------------------------------------------- Codes Province --------------------------------------------------------
 go
@@ -32,8 +30,6 @@ begin
 	else
 	update t_province set description_province = @description_province where id_province = @id_province
 end
-
-
 ---------------------procedure recuperer_province
 
 go
@@ -80,8 +76,6 @@ begin
 	else
 		update t_ville set description_ville = @description_ville, id_province = @id_province where id_ville = @id_ville
 end
-
-
 -----------------procedure recuperer_ville
 
 go
@@ -113,8 +107,6 @@ create table t_zone
 	constraint pk_primary primary key(id_zone),
 	constraint fk_zone_ville foreign key(id_ville) references t_ville(id_ville) on delete cascade on update cascade
 )
-
-
 -------------procedure afficher_zone
 go
 create procedure afficher_zone
@@ -261,10 +253,7 @@ as
 			id_zone=@id_zone
 				order by 
 					id_zone asc
-
-
 -------------------------------- Fin des codes Structures--------------------------------------------------
-
 
 ---------------------------------categorie produit
 go
@@ -311,33 +300,33 @@ as
 -------------------------fin categorie_prod-------------------------------------
 --------------------------------------------------------- Codes produit------------------------------------------------
 go
+create table t_forme
+(
+	id_forme nvarchar(50),
+	description_forme nvarchar(200),
+	constraint pk_forme primary key(id_forme)
+)
+go
+create table t_conditionnement
+(
+	id_conditionnement nvarchar(50),
+	desription_forme nvarchar(200),
+	constraint pk_conditionnement primary key(id_conditionnement)
+)
+go
 create table t_produit
 (
 	code_produit nvarchar(50),
 	designation_produit nvarchar(50),
 	code_categorie nvarchar(50),
- 	constraint pk_equipement primary key(code_produit),
-	constraint fk_categorie_prod foreign key(code_categorie) references t_categorie_prod(code_categorie) on delete cascade on update cascade
+	id_forme nvarchar(50),
+	id_conditionnement nvarchar(50),
+    constraint pk_produit primary key(code_produit),
+	constraint fk_categorie foreign key(code_categorie) references t_categorie_prod(code_categorie),
+	constraint fk_forme foreign key(id_forme) references t_forme(id_forme),
+	constraint fk_conditionnement foreign key(id_conditionnement) references t_conditionnement(id_conditionnement)
 )
-
------------- procedure enregistrer_produit
-
-go
-create procedure enregistrer_produit
-(
-	@code_produit nvarchar(50),
-	@designation_produit nvarchar(50),
-	@categorie nvarchar(50)
-)
-as
-begin
-	declare @code_categorie nvarchar(50) = (select code_categorie from t_categorie_prod where designation_categorie = @categorie)
-	if not exists(select * from t_produit where code_produit = @code_produit)
-		insert into t_produit values (@code_produit, @designation_produit, @code_categorie)
-	else
-		update t_produit set designation_produit = @designation_produit, code_categorie = @code_categorie where code_produit = @code_produit
-end
-
+ go
 ------------------ procedure recuperer_produit
 
 go
@@ -353,9 +342,43 @@ as
 	delete from t_produit
 		where
 			code_produit=@code_produit
-
+go
 ------------------------------------------------------fin codes produits
-
+create table t_projet
+(
+	id_projet nvarchar(50),
+	description_projet nvarchar(200),
+	constraint pk_projet primary key(id_projet)
+)
+go
+create procedure afficher_projet
+as
+	select top 50
+		id_projet as 'Projet',
+		description_projet as 'Description'
+	from t_projet
+		order by id_projet asc
+go
+create procedure supprimer_projet
+@id_projet nvarchar(50)
+as
+	delete from t_projet	
+		where
+			id_projet like @id_projet
+go
+------------ procedure enregistrer_produit
+go
+create table t_affectation_projet
+(
+	num_affectation int identity,
+	date_affectation date,
+	code_produit nvarchar(50),
+	id_projet nvarchar(50),
+	constraint pk_affectation primary key(num_affectation),
+	constraint fk_produit foreign key(code_produit) references t_produit(code_produit),
+	constraint fk_projet foreign key(id_projet) references t_projet(id_projet)
+)
+go
 /****** Object:  Table t_depot     ******/
 go
 create table t_depot
@@ -393,8 +416,6 @@ create procedure afficher_depot
 		select top 500 code_depot,designation_depot
 			from t_depot
 				order by code_depot asc
-
-
 go
 /****** Object:  StoredProcedure charger_depot     ******/
 
@@ -404,9 +425,6 @@ select
 	code_depot from t_depot
 	order by code_depot asc
 go
-
-
-go
 /****** Object:  StoredProcedure rechercher_depot     ******/
 
 create procedure rechercher_depot
@@ -414,8 +432,6 @@ create procedure rechercher_depot
 	as
 	select * from t_depot
 		where code_depot=@code_depot
-
-
 go
 /****** Object:  StoredProcedure supprimer_depot     ******/
 
@@ -426,8 +442,7 @@ create procedure supprimer_depot
 		where code_depot=@code_depot
 
 ------------------------------------------fin codes depot--------------------------------------------
-
----------------------------------- Codes fournisseur ------------------------------------------------
+-------------------------------- Codes fournisseur ------------------------------------------------
 
 go
 /****** Object:  Table t_fournisseur     ******/
@@ -644,7 +659,9 @@ create table t_commandes
 	qte decimal,
 	alerte_level nvarchar(50),------- critique,
 	date_commande date,
-  id_structure nvarchar(50),
+	date_souhaitee date,
+	status_commande nvarchar(50),
+	id_structure nvarchar(50),
   constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
@@ -740,9 +757,10 @@ create table t_login(
 	nom_utilisateur nvarchar(50),
 	mot_de_passe nvarchar(50),
 	niveau_acces nvarchar(50),
- constraint pk_login primary key(nom_utilisateur)
+	id_structure nvarchar(50),
+ constraint pk_login primary key(nom_utilisateur),
+ constraint fk_strucutre foreign key(id_structure) references t_structure(id_structure)
  )
-
  
 go
 /****** Object:  StoredProcedure enregistrer_login     ******/
@@ -750,21 +768,20 @@ go
 create procedure enregistrer_login
 	@nom_utilisateur nvarchar(50),
 	@mot_de_passe nvarchar(50),
-	@niveau_acces nvarchar(50)
+	@niveau_acces nvarchar(50),
+	@id_structure nvarchar(50)
 	as
 	merge t_login as t_logins
-	using(select @nom_utilisateur, @mot_de_passe, @niveau_acces) 
-		as t_parametres(prm_nom_utilisateur, prm_mot_de_passe, prm_niveau_acces)
+	using(select @nom_utilisateur, @mot_de_passe, @niveau_acces, @id_structure) 
+		as t_parametres(prm_nom_utilisateur, prm_mot_de_passe, prm_niveau_acces, prm_id_structure)
 	on(t_logins.nom_utilisateur=t_parametres.prm_nom_utilisateur)
 		when matched then
 			update set mot_de_passe=t_parametres.prm_mot_de_passe,
-					   niveau_acces=t_parametres.prm_niveau_acces
+					   niveau_acces=t_parametres.prm_niveau_acces,
+					   id_structure=t_parametres.prm_id_structure
 		when not matched then
-			insert (nom_utilisateur, mot_de_passe, niveau_acces)
-			values(@nom_utilisateur, @mot_de_passe, @niveau_acces);
-
-
-
+			insert (nom_utilisateur, mot_de_passe, niveau_acces,id_structure)
+			values(@nom_utilisateur, @mot_de_passe, @niveau_acces, @id_structure);
 go
 /****** Object:  StoredProcedure supprimer_login     ******/
 
