@@ -14,8 +14,16 @@ create table t_province
 	id_province nvarchar(50),
 	description_province nvarchar(50),
 	constraint pk_province primary key(id_province)
-);
-
+)
+go
+create procedure afficher_province
+as
+	select top 50 
+		id_province as 'Province', 
+		description_province as 'Description'
+	from t_province
+		order by id_province asc
+go
 ------------------------procedure enregistrer_province
 go
 create procedure enregistrer_province
@@ -312,29 +320,7 @@ create table t_forme
 	constraint pk_forme primary key(id_forme)
 )
 go
-create table t_projet
-(
-	id_projet nvarchar(50),
-	description_projet nvarchar(100),
-	constraint pk_projet primary key(id_projet)
-)
-go
 --------------------------------------------------------- Codes produit------------------------------------------------
-go
-create table t_forme
-(
-	id_forme nvarchar(50),
-	description_forme nvarchar(200),
-	constraint pk_forme primary key(id_forme)
-)
-go
-create table t_conditionnement
-(
-	id_conditionnement nvarchar(50),
-	desription_forme nvarchar(200),
-	constraint pk_conditionnement primary key(id_conditionnement)
-)
-go
 create table t_produit
 (
 	code_produit nvarchar(50),
@@ -419,17 +405,6 @@ create table t_affectation_projet
 )
 go
 /****** Object:  Table t_depot     ******/
-go
-create table t_affectation_projet
-(
-	num_affectation int,
-	id_projet nvarchar(50),
-	code_produit nvarchar(50),
-	constraint pk_affectation primary key(num_affectation),
-	constraint fk_affec_projet foreign key(id_projet) references t_projet(id_projet) on update cascade on delete cascade,
-	constraint fk_produit_affec foreign key(code_produit) references t_produit(code_produit) on update cascade on delete cascade
-)
-go
 create table t_depot
 (
 	code_depot nvarchar(50),
@@ -724,19 +699,48 @@ create procedure inserer_commande
 @qte decimal,
 @alerte_level nvarchar(50),
 @date_commande date,
+@date_souhaitee date,
+@status_commande nvarchar(50),
 @id_structure nvarchar(50)
 as
 	insert into t_commandes
-		(code_produit, qte, alerte_level, date_commande, id_structure)
+		(code_produit, qte, alerte_level, date_commande, date_souhaitee, status_commande, id_structure)
 	values
-		(@code_produit, @qte, @alerte_level, @date_commande, @id_structure)
-
-----------------------------------------
-
-
---------------------------------------------
-
+		(@code_produit, @qte, @alerte_level, @date_commande, @date_souhaitee, @status_commande, @id_structure)
 go
+create procedure modifier_commande
+@num_commande int,
+@code_produit nvarchar(50),
+@qte decimal,
+@alerte_level nvarchar(50),
+@date_commande date,
+@date_souhaitee date,
+@status_commande nvarchar(50),
+@id_structure nvarchar(50)
+as
+	update t_commandes
+		set
+			code_produit=@code_produit,
+			qte=@qte,
+			alerte_level=@alerte_level,
+			date_commande=@date_commande,
+			date_souhaitee=@date_souhaitee,
+			status_commande=@status_commande,
+			id_structure=@id_structure
+		where
+			num_commande like @num_commande
+go
+create procedure modifier_status_commande
+@num_commande int,
+@status_commande nvarchar(50)
+as
+	update t_commandes
+		set
+			status_commande=@status_commande
+		where
+			num_commande like @num_commande
+go
+--------------------------------------------
 create procedure supprimer_commande
 @num_commande int
 as
@@ -884,7 +888,6 @@ as
 go
 --------------------------Fin ajout stock informations -------------------------------------------------
 -------------------------- procedure rechercher_stock
-
 go
 create procedure rechercher_stock
 as
