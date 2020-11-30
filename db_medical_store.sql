@@ -228,9 +228,7 @@ create procedure recuperer_structure
 as
 	select id_structure  from t_structure	
 		order by id_structure asc
-
-
-
+go
 -----------------------------les recherches structures-zone-ville
 
 go
@@ -262,9 +260,42 @@ as
 				order by 
 					id_zone asc
 -------------------------------- Fin des codes Structures--------------------------------------------------
-
----------------------------------categorie produit
+create table t_moyenne
+(
+	num_moyenne int identity,
+	id_structure nvarchar(50),
+	code_produit nvarchar(50),
+	avg_mensuel int,
+	avg_marge int,
+	date_enreg date,
+	constraint pk_moyenne primary key(num_moyenne)
+)
 go
+create procedure inserer_moyenne
+@num_moyenne int,
+@id_structure nvarchar(50),
+@code_produit nvarchar(50),
+@avg_mensuel int,
+@avg_marge int
+as
+	insert into t_moyenne
+		(id_structure, code_produit, avg_mensuel, avg_marge, date_enreg)
+	values
+		(@id_structure, @code_produit, @avg_mensuel, @avg_marge, GETDATE())
+go
+
+create procedure recuperer_moyenne
+@id_structure nvarchar(50),
+@code_produit nvarchar(50)
+as
+	select top 1
+		avg_mensuel,
+		avg_marge
+	from t_moyenne
+		order by
+			date_enreg desc
+go
+---------------------------------categorie produit-------------------------------------------
 create table t_categorie_prod
 (
 	code_categorie nvarchar(50),
@@ -690,9 +721,20 @@ create table t_commandes
   constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
-
-
----------------------------------------
+go
+create procedure afficher_commandes
+as
+	select top 50
+		num_commande as "Commande No",
+		code_produit as "Produit",
+		qte as "QTE",
+		alerte_level as "Level",
+		date_commande as "Date Commande",
+		date_souhaitee as "Date Souhaitee",
+		status_commande as "Status Commandes",
+		id_structure as "Strucuture"
+	from t_commandes
+		order by num_commande desc
 go
 create procedure inserer_commande
 @code_produit nvarchar(50),
@@ -759,9 +801,7 @@ create table t_transporteur
 	descr_transporteur nvarchar(50),
 	num_phone nvarchar(50),
 	adresse_transporteur nvarchar(50),
-	constraint pk_transporteur primary key(code_transporteur)
-);
-
+	constraint pk_transporteur primary key(code_transporteur))
 go
 create procedure enregistrer_transporteur
 	@code_transporteur nvarchar(50),
@@ -789,8 +829,6 @@ create table t_distribution
 		constraint fk_distr_commande foreign key(num_commande) references t_commandes(num_commande) on delete cascade on update cascade,
 		constraint fk_distr_transporteur foreign key(code_transporteur) references t_transporteur(code_transporteur) on delete cascade on update cascade
 	)
-
-
 go
 create table t_confirmation_reception
 (
