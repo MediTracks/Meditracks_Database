@@ -284,8 +284,21 @@ create table t_moyenne
 	constraint fk_structure_moyenne foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
 )
 go
+create procedure afficher_moyenne
+as
+	select top 50 
+		num_moyenne as "No.",
+		id_structure as "Structure",
+		code_produit as "Produit",
+		avg_mensuel as "Moyenne",
+		avg_marge as "Marge",
+		date_enreg as "Date"
+	from t_moyenne
+		order by
+			num_moyenne desc
+go
+
 create procedure inserer_moyenne
-@num_moyenne int,
 @id_structure nvarchar(50),
 @code_produit nvarchar(50),
 @avg_mensuel int,
@@ -304,7 +317,7 @@ as
 	select top 1
 		avg_mensuel,
 		avg_marge
-	from t_moyenne
+		from t_moyenne
 		order by
 			date_enreg desc
 go
