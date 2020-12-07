@@ -66,9 +66,24 @@ create table t_ville
 	constraint pk_ville primary key(id_ville),
 	constraint fk_province_ville foreign key(id_province) references t_province(id_province) on delete cascade on update cascade
 )
-
------------------procedure enregistrer_ville
-
+go
+-------------------------------------------------procedure enregistrer_ville----------------------------------------
+create procedure afficher_ville
+as
+	select top 50
+		id_ville as 'Ville',
+		description_ville as 'Description',
+		id_province as 'Province'
+	from t_ville
+	order by id_ville asc
+go
+create procedure recuperer_ville
+as
+	select 
+		id_ville 
+	from
+		t_ville
+	order by id_ville asc
 go
 create procedure enregistrer_ville
 (
@@ -84,16 +99,8 @@ begin
 	else
 		update t_ville set description_ville = @description_ville, id_province = @id_province where id_ville = @id_ville
 end
------------------procedure recuperer_ville
-
 go
-create procedure recuperer_ville
-as
-select id_ville from t_ville
-	order by id_ville asc
-
---------------- procedure supprimer_ville
-
+---------- procedure supprimer_ville
 go
 create procedure supprimer_ville
 @id_ville nvarchar(50)
@@ -101,10 +108,9 @@ as
 	delete from t_ville
 		where
 			id_ville=@id_ville
+go			
 -------------------------------Fin Codes Villes---------------------------------------------------
---------------------------------------Codes Zones--------------------------------------------------
-
-go
+--------------------------------------Codes Zones-------------------------------------------------
 create table t_zone
 (
 	id_zone nvarchar(50),
@@ -115,17 +121,15 @@ create table t_zone
 	constraint pk_primary primary key(id_zone),
 	constraint fk_zone_ville foreign key(id_ville) references t_ville(id_ville) on delete cascade on update cascade
 )
--------------procedure afficher_zone
 go
+------------------------------procedure afficher_zone----------------------------------------------
 create procedure afficher_zone
 as
 	select top 50 id_zone as 'code zone', descr_zone as 'description', adresse as 'adresse', telephone as 'telephone', id_ville as 'ville'  
 	from t_zone
 		order by id_ville asc, id_zone asc
-
-------------procedure enregistrer_zone
-
 go
+-------------------------------procedure enregistrer_zone-------------------------------------------
 create procedure enregistrer_zone
 @id_zone nvarchar(50),
 @descr_zone nvarchar(50),
@@ -157,8 +161,13 @@ as
 			id_zone=@id_zone
 go
 create procedure recuperer_zone
+@id_ville nvarchar(50)
 as
-	select id_zone from t_zone	
+	select 
+		id_zone 
+	from t_zone
+		where
+			id_ville like @id_ville
 		order by id_zone asc
 go
 -----------------------------------Fin Codes Zone--------------------------------------------------
@@ -225,12 +234,13 @@ as
 
 go
 create procedure recuperer_structure
+@id_zone nvarchar(50)
 as
-	select id_structure  from t_structure	
-		order by id_structure asc
-
-
-
+	select id_structure  from t_structure
+	where
+		id_zone like @id_zone
+	order by id_structure asc
+go
 -----------------------------les recherches structures-zone-ville
 
 go
@@ -262,9 +272,56 @@ as
 				order by 
 					id_zone asc
 -------------------------------- Fin des codes Structures--------------------------------------------------
-
----------------------------------categorie produit
+create table t_moyenne
+(
+	num_moyenne int identity,
+	id_structure nvarchar(50),
+	code_produit nvarchar(50),
+	avg_mensuel int,
+	avg_marge int,
+	date_enreg date,
+	constraint pk_moyenne primary key(num_moyenne),
+	constraint fk_structure_moyenne foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
+)
 go
+create procedure afficher_moyenne
+as
+	select top 50 
+		num_moyenne as "No.",
+		id_structure as "Structure",
+		code_produit as "Produit",
+		avg_mensuel as "Moyenne",
+		avg_marge as "Marge",
+		date_enreg as "Date"
+	from t_moyenne
+		order by
+			num_moyenne desc
+go
+
+create procedure inserer_moyenne
+@id_structure nvarchar(50),
+@code_produit nvarchar(50),
+@avg_mensuel int,
+@avg_marge int
+as
+	insert into t_moyenne
+		(id_structure, code_produit, avg_mensuel, avg_marge, date_enreg)
+	values
+		(@id_structure, @code_produit, @avg_mensuel, @avg_marge, GETDATE())
+go
+
+create procedure recuperer_moyenne
+@id_structure nvarchar(50),
+@code_produit nvarchar(50)
+as
+	select top 1
+		avg_mensuel,
+		avg_marge
+		from t_moyenne
+		order by
+			date_enreg desc
+go
+---------------------------------categorie produit-------------------------------------------
 create table t_categorie_prod
 (
 	code_categorie nvarchar(50),
@@ -687,12 +744,25 @@ create table t_commandes
 	date_souhaitee date,
 	status_commande nvarchar(50),
 	id_structure nvarchar(50),
+	description_commande nvarchar(max),
   constraint pk_commande primary key (num_commande),
 	constraint fk_commandes_structure foreign key(id_structure) references t_structure(id_structure)
 )
-
-
----------------------------------------
+go
+create procedure afficher_commandes
+as
+	select top 50
+		num_commande as "Commande No",
+		code_produit as "Produit",
+		qte as "QTE",
+		alerte_level as "Level",
+		date_commande as "Date Commande",
+		date_souhaitee as "Date Souhaitee",
+		status_commande as "Status Commandes",
+		id_structure as "Strucuture",
+		description_commande as "Description"
+	from t_commandes
+		order by num_commande desc
 go
 create procedure inserer_commande
 @code_produit nvarchar(50),
@@ -701,12 +771,13 @@ create procedure inserer_commande
 @date_commande date,
 @date_souhaitee date,
 @status_commande nvarchar(50),
-@id_structure nvarchar(50)
+@id_structure nvarchar(50),
+@description_commande nvarchar(max)
 as
 	insert into t_commandes
-		(code_produit, qte, alerte_level, date_commande, date_souhaitee, status_commande, id_structure)
+		(code_produit, qte, alerte_level, date_commande, date_souhaitee, status_commande, id_structure, description_commande)
 	values
-		(@code_produit, @qte, @alerte_level, @date_commande, @date_souhaitee, @status_commande, @id_structure)
+		(@code_produit, @qte, @alerte_level, @date_commande, @date_souhaitee, @status_commande, @id_structure, @description_commande)
 go
 create procedure modifier_commande
 @num_commande int,
@@ -716,7 +787,8 @@ create procedure modifier_commande
 @date_commande date,
 @date_souhaitee date,
 @status_commande nvarchar(50),
-@id_structure nvarchar(50)
+@id_structure nvarchar(50),
+@description_commande nvarchar(max)
 as
 	update t_commandes
 		set
@@ -726,7 +798,8 @@ as
 			date_commande=@date_commande,
 			date_souhaitee=@date_souhaitee,
 			status_commande=@status_commande,
-			id_structure=@id_structure
+			id_structure=@id_structure,
+			description_commande=@description_commande
 		where
 			num_commande like @num_commande
 go
@@ -759,9 +832,7 @@ create table t_transporteur
 	descr_transporteur nvarchar(50),
 	num_phone nvarchar(50),
 	adresse_transporteur nvarchar(50),
-	constraint pk_transporteur primary key(code_transporteur)
-);
-
+	constraint pk_transporteur primary key(code_transporteur))
 go
 create procedure enregistrer_transporteur
 	@code_transporteur nvarchar(50),
@@ -789,8 +860,6 @@ create table t_distribution
 		constraint fk_distr_commande foreign key(num_commande) references t_commandes(num_commande) on delete cascade on update cascade,
 		constraint fk_distr_transporteur foreign key(code_transporteur) references t_transporteur(code_transporteur) on delete cascade on update cascade
 	)
-
-
 go
 create table t_confirmation_reception
 (
