@@ -172,7 +172,6 @@ as
 go
 -----------------------------------Fin Codes Zone--------------------------------------------------
 -----------------------------------Debut Codes Structure-------------------------------------------
-
 create table t_structure
 (
 	id_structure nvarchar(50),
@@ -183,9 +182,7 @@ create table t_structure
 	constraint pk_structure primary key(id_structure),
 	constraint fk_structure_zone foreign key(id_zone) references t_zone(id_zone) on delete cascade on update cascade
 )
-
------------------ procedure afficher_structure
-
+----------------- procedure afficher_structure------------------------------------------------------
 go
 create procedure afficher_structure
 as
@@ -272,6 +269,49 @@ as
 				order by 
 					id_zone asc
 -------------------------------- Fin des codes Structures--------------------------------------------------
+go
+create table t_effectifs
+(
+	id_effectif int identity,
+	id_structure nvarchar(50),
+	nbre_hommes int,
+	nbre_femmes int,	
+	date_enregistrement date,
+	nbre_total int,
+	constraint pk_effectif primary key(id_effectif),
+	constraint fk_structure_effectif foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
+)
+go
+create procedure afficher_effectifs
+as
+	select top 50 
+		id_effectif as 'ID',
+		id_structure as 'Structure',
+		nbre_hommes as 'Hommes',
+		nbre_femmes as 'Femmes',
+		date_enregistrement as 'Date',
+		nbre_total as 'Total'
+	from t_effectifs
+		order by
+			date_enregistrement desc,
+			id_effectif desc
+go
+create procedure inserer_effectif
+@id_structure nvarchar(50),
+@nbre_hommes int,
+@nbre_femmes int
+as
+	insert into t_effectifs
+		(id_structure, nbre_hommes, nbre_femmes, date_enregistrement, nbre_total)
+	values
+		(@id_structure, @nbre_hommes, @nbre_femmes, GETDATE(), @nbre_femmes + @nbre_hommes)
+go
+create procedure supprimer_effectif
+@id_effectif int
+as
+	delete from t_effectifs
+		where id_effectif like @id_effectif
+go
 create table t_moyenne
 (
 	num_moyenne int identity,
@@ -280,10 +320,13 @@ create table t_moyenne
 	avg_mensuel int,
 	avg_marge int,
 	date_enreg date,
+	id_auto int identity,
 	constraint pk_moyenne primary key(num_moyenne),
 	constraint fk_structure_moyenne foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
 )
 go
+alter table t_moyenne
+add id_auto int identity,
 create procedure afficher_moyenne
 as
 	select top 50 
@@ -319,7 +362,8 @@ as
 		avg_marge
 		from t_moyenne
 		order by
-			date_enreg desc
+			date_enreg desc, 
+
 go
 ---------------------------------categorie produit-------------------------------------------
 create table t_categorie_prod
@@ -534,11 +578,9 @@ create table t_fournisseur
 	mail_fournisseur nvarchar(50),
  constraint pk_fournisseur primary key (code_fournisseur)
  )
-
-
+go
 ---------------procedure enregistrer_fournisseur
 
-go
 create procedure enregistrer_fournisseur
 	@code_fournisseur nvarchar(50),
 	@noms_fournisseur nvarchar(50),
@@ -812,6 +854,33 @@ as
 			status_commande=@status_commande
 		where
 			num_commande like @num_commande
+go
+create procedure compteur_commande
+@status_commande nvarchar(50)
+as
+	select 
+		count(distinct num_commande)
+	from t_commandes
+		where
+			status_commande like @status_commande
+go
+create procedure commande_en_cours
+@status_commande nvarchar(50)
+as
+	select top 50
+		num_commande as "Commande No",
+		code_produit as "Produit",
+		qte as "QTE",
+		alerte_level as "Level",
+		date_commande as "Date Commande",
+		date_souhaitee as "Date Souhaitee",
+		status_commande as "Status Commandes",
+		id_structure as "Strucuture",
+		description_commande as "Description"
+	from t_commandes
+		where
+			status_commande like @status_commande
+		order by num_commande desc
 go
 --------------------------------------------
 create procedure supprimer_commande
