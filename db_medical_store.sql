@@ -435,8 +435,19 @@ create table t_produit
 	constraint fk_conditionnement foreign key(id_conditionnement) references t_conditionnement(id_conditionnement)
 )
  go
+ create procedure afficher_produit
+ as
+	select top 50
+		code_produit ,
+		designation_produit,
+		code_categorie,
+		id_forme,
+		id_conditionnement
+	from t_produit
+	order by
+		code_produit asc
+go
 ------------ procedure enregistrer_produit
-
 go
 create procedure enregistrer_produit
 (
@@ -458,10 +469,18 @@ end
 go
 create procedure recuperer_produit
 as
-	select * from t_produit order by code_produit asc
-
----------------------procedure supprimer_produit
+	select designation_produit from t_produit order by code_produit asc
 go
+create procedure rechercher_produit
+@texte nvarchar(50)
+as
+	select designation_produit from t_produit order by code_produit asc
+go
+create procedure rechercher_code_produit
+@designation_produit nvarchar(50)
+as
+	select code_produit from t_produit
+---------------------procedure supprimer_produit
 create procedure supprimer_produit
 	@code_produit nvarchar(50)
 as
@@ -686,15 +705,12 @@ create table t_approvisionnement
 	code_depot nvarchar(50),
     ugs nvarchar(50), ----unite de gestion de stock, milligrammes
 	quantite int,
-	cout_total decimal(18,0),
-	
+	cout_total decimal(18,0),	
  constraint pk_approvisionnement primary key(code_approvisionnement),
  constraint fk_fournisseur_approv foreign key(code_fournisseur) references t_fournisseur(code_fournisseur),
  constraint fk_produit_approv foreign key(code_produit) references t_produit(code_produit),
  constraint fk_depot_approv foreign key(code_depot) references t_depot(code_depot), 
 )
-
-
 go
 /****** Object:  StoredProcedure inserer_approvisionnement     ******/
 
@@ -758,9 +774,6 @@ as
 select top 500 code_approvisionnement as 'Code', date_approvisionnement as 'Date', code_fournisseur as 'Fournisseur', code_depot as 'Depot', quantite as 'Qte', cout_total as 'Prix'
 	from t_approvisionnement
 		order by date_approvisionnement desc, code_approvisionnement desc
-
-
-
 go
 /****** Object:  StoredProcedure charger_approvisionnement     ******/
 
@@ -770,12 +783,69 @@ as
 	code_approvisionnement
 	from t_approvisionnement
 	order by code_approvisionnement desc
-
+go
+create procedure recuperer_approvisionnement
+@code_produit nvarchar(50)
+as
+select
+	t_approvisionnement.code_approvisionnement as 'Code Approvisionnement', 
+	t_approvisionnement.code_produit as 'Code Produit', 
+	t_produit.designation_produit as 'Designation',
+	t_approvisionnement.code_fournisseur as 'Fournisseur', 
+	t_produit.code_categorie as 'Categorie',
+	t_approvisionnement.date_approvisionnement as 'Date Entree', 
+	t_approvisionnement.date_expiration as 'Expiration',	 
+    t_approvisionnement.quantite as 'Quantite Initiale',	
+	t_approvisionnement.ugs as 'UGS',
+	t_situation_stock.qte_restante as 'Quantite Restante',
+	t_situation_stock.status_stock as 'Status Stock',
+	t_situation_stock.date_situation as 'Derniere Date'	
+from           
+	t_approvisionnement inner join
+                t_produit on t_approvisionnement.code_produit = t_produit.code_produit inner join
+                        t_situation_stock on t_approvisionnement.code_approvisionnement = t_situation_stock.code_approvisionnement
+where
+	t_approvisionnement.code_produit like @code_produit and t_situation_stock.status_stock <> 'Epuisee'
+order by
+	t_approvisionnement.date_approvisionnement asc,  t_situation_stock.date_situation desc
+go
+create table t_situation_stock
+(
+	num_situation int identity,
+	code_approvisionnement nvarchar(50),
+	date_situation date,
+	qte_restante int,
+	status_stock nvarchar(50), ----- soit epuisee, soit perimee, soit en rupture, ......
+	constraint pk_situation primary key(num_situation),
+	constraint fk foreign key(code_approvisionnement) references t_approvisionnement(code_approvisionnement) on delete cascade on update cascade
+)
+go
+create procedure afficher_situation_stock
+as
+select
+	t_approvisionnement.code_approvisionnement as 'Code Approvisionnement', 
+	t_approvisionnement.code_produit as 'Code Produit', 
+	t_produit.designation_produit as 'Designation',
+	t_approvisionnement.code_fournisseur as 'Fournisseur', 
+	t_produit.code_categorie as 'Categorie',
+	t_approvisionnement.date_approvisionnement as 'Date Entree', 
+	t_approvisionnement.date_expiration as 'Expiration',	 
+    t_approvisionnement.quantite as 'Quantite Initiale',	
+	t_approvisionnement.ugs as 'UGS',
+	t_situation_stock.qte_restante as 'Quantite Restante',
+	t_situation_stock.status_stock as 'Status Stock',
+	t_situation_stock.date_situation as 'Derniere Date'	
+from           
+	t_approvisionnement inner join
+                t_produit on t_approvisionnement.code_produit = t_produit.code_produit inner join
+                        t_situation_tock on t_approvisionnement.code_approvisionnement = t_situation_tock.code_approvisionnement
+	order by
+		t_approvisionnement.date_approvisionnement asc,  t_situation_stock.date_situation desc
+go
 --------------------------------------------------------------fin codes approvisionnement------------------------------------------
 
 ------------------------------------Debut codes de la commande-------------------------------------------------------------
 
-go
 create table t_commandes
 	(
 	num_commande int identity,
@@ -912,8 +982,7 @@ as
 	insert into t_transporteur 
 		(code_transporteur, descr_transporteur, num_phone, adresse_transporteur)
 	values
-		(@code_transporteur, @descr_transporteur, @num_phone, @adresse_transporteur);
-
+		(@code_transporteur, @descr_transporteur, @num_phone, @adresse_transporteur)
 go
 create table t_distribution
 	(
