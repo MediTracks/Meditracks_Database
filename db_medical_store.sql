@@ -172,7 +172,6 @@ as
 go
 -----------------------------------Fin Codes Zone--------------------------------------------------
 -----------------------------------Debut Codes Structure-------------------------------------------
-
 create table t_structure
 (
 	id_structure nvarchar(50),
@@ -183,9 +182,7 @@ create table t_structure
 	constraint pk_structure primary key(id_structure),
 	constraint fk_structure_zone foreign key(id_zone) references t_zone(id_zone) on delete cascade on update cascade
 )
-
------------------ procedure afficher_structure
-
+----------------- procedure afficher_structure------------------------------------------------------
 go
 create procedure afficher_structure
 as
@@ -272,6 +269,49 @@ as
 				order by 
 					id_zone asc
 -------------------------------- Fin des codes Structures--------------------------------------------------
+go
+create table t_effectifs
+(
+	id_effectif int identity,
+	id_structure nvarchar(50),
+	nbre_hommes int,
+	nbre_femmes int,	
+	date_enregistrement date,
+	nbre_total int,
+	constraint pk_effectif primary key(id_effectif),
+	constraint fk_structure_effectif foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
+)
+go
+create procedure afficher_effectifs
+as
+	select top 50 
+		id_effectif as 'ID',
+		id_structure as 'Structure',
+		nbre_hommes as 'Hommes',
+		nbre_femmes as 'Femmes',
+		date_enregistrement as 'Date',
+		nbre_total as 'Total'
+	from t_effectifs
+		order by
+			date_enregistrement desc,
+			id_effectif desc
+go
+create procedure inserer_effectif
+@id_structure nvarchar(50),
+@nbre_hommes int,
+@nbre_femmes int
+as
+	insert into t_effectifs
+		(id_structure, nbre_hommes, nbre_femmes, date_enregistrement, nbre_total)
+	values
+		(@id_structure, @nbre_hommes, @nbre_femmes, GETDATE(), @nbre_femmes + @nbre_hommes)
+go
+create procedure supprimer_effectif
+@id_effectif int
+as
+	delete from t_effectifs
+		where id_effectif like @id_effectif
+go
 create table t_moyenne
 (
 	num_moyenne int identity,
@@ -280,10 +320,13 @@ create table t_moyenne
 	avg_mensuel int,
 	avg_marge int,
 	date_enreg date,
+	id_auto int identity,
 	constraint pk_moyenne primary key(num_moyenne),
 	constraint fk_structure_moyenne foreign key(id_structure) references t_structure(id_structure) on delete cascade on update cascade
 )
 go
+alter table t_moyenne
+add id_auto int identity,
 create procedure afficher_moyenne
 as
 	select top 50 
@@ -319,7 +362,8 @@ as
 		avg_marge
 		from t_moyenne
 		order by
-			date_enreg desc
+			date_enreg desc, 
+
 go
 ---------------------------------categorie produit-------------------------------------------
 create table t_categorie_prod
@@ -391,8 +435,19 @@ create table t_produit
 	constraint fk_conditionnement foreign key(id_conditionnement) references t_conditionnement(id_conditionnement)
 )
  go
+ create procedure afficher_produit
+ as
+	select top 50
+		code_produit ,
+		designation_produit,
+		code_categorie,
+		id_forme,
+		id_conditionnement
+	from t_produit
+	order by
+		code_produit asc
+go
 ------------ procedure enregistrer_produit
-
 go
 create procedure enregistrer_produit
 (
@@ -414,10 +469,18 @@ end
 go
 create procedure recuperer_produit
 as
-	select * from t_produit order by code_produit asc
-
----------------------procedure supprimer_produit
+	select designation_produit from t_produit order by code_produit asc
 go
+create procedure rechercher_produit
+@texte nvarchar(50)
+as
+	select designation_produit from t_produit order by code_produit asc
+go
+create procedure rechercher_code_produit
+@designation_produit nvarchar(50)
+as
+	select code_produit from t_produit
+---------------------procedure supprimer_produit
 create procedure supprimer_produit
 	@code_produit nvarchar(50)
 as
@@ -534,11 +597,9 @@ create table t_fournisseur
 	mail_fournisseur nvarchar(50),
  constraint pk_fournisseur primary key (code_fournisseur)
  )
-
-
+go
 ---------------procedure enregistrer_fournisseur
 
-go
 create procedure enregistrer_fournisseur
 	@code_fournisseur nvarchar(50),
 	@noms_fournisseur nvarchar(50),
@@ -644,15 +705,12 @@ create table t_approvisionnement
 	code_depot nvarchar(50),
     ugs nvarchar(50), ----unite de gestion de stock, milligrammes
 	quantite int,
-	cout_total decimal(18,0),
-	
+	cout_total decimal(18,0),	
  constraint pk_approvisionnement primary key(code_approvisionnement),
  constraint fk_fournisseur_approv foreign key(code_fournisseur) references t_fournisseur(code_fournisseur),
  constraint fk_produit_approv foreign key(code_produit) references t_produit(code_produit),
  constraint fk_depot_approv foreign key(code_depot) references t_depot(code_depot), 
 )
-
-
 go
 /****** Object:  StoredProcedure inserer_approvisionnement     ******/
 
@@ -716,9 +774,6 @@ as
 select top 500 code_approvisionnement as 'Code', date_approvisionnement as 'Date', code_fournisseur as 'Fournisseur', code_depot as 'Depot', quantite as 'Qte', cout_total as 'Prix'
 	from t_approvisionnement
 		order by date_approvisionnement desc, code_approvisionnement desc
-
-
-
 go
 /****** Object:  StoredProcedure charger_approvisionnement     ******/
 
@@ -728,12 +783,69 @@ as
 	code_approvisionnement
 	from t_approvisionnement
 	order by code_approvisionnement desc
-
+go
+create procedure recuperer_approvisionnement
+@code_produit nvarchar(50)
+as
+select
+	t_approvisionnement.code_approvisionnement as 'Code Approvisionnement', 
+	t_approvisionnement.code_produit as 'Code Produit', 
+	t_produit.designation_produit as 'Designation',
+	t_approvisionnement.code_fournisseur as 'Fournisseur', 
+	t_produit.code_categorie as 'Categorie',
+	t_approvisionnement.date_approvisionnement as 'Date Entree', 
+	t_approvisionnement.date_expiration as 'Expiration',	 
+    t_approvisionnement.quantite as 'Quantite Initiale',	
+	t_approvisionnement.ugs as 'UGS',
+	t_situation_stock.qte_restante as 'Quantite Restante',
+	t_situation_stock.status_stock as 'Status Stock',
+	t_situation_stock.date_situation as 'Derniere Date'	
+from           
+	t_approvisionnement inner join
+                t_produit on t_approvisionnement.code_produit = t_produit.code_produit inner join
+                        t_situation_stock on t_approvisionnement.code_approvisionnement = t_situation_stock.code_approvisionnement
+where
+	t_approvisionnement.code_produit like @code_produit and t_situation_stock.status_stock <> 'Epuisee'
+order by
+	t_approvisionnement.date_approvisionnement asc,  t_situation_stock.date_situation desc
+go
+create table t_situation_stock
+(
+	num_situation int identity,
+	code_approvisionnement nvarchar(50),
+	date_situation date,
+	qte_restante int,
+	status_stock nvarchar(50), ----- soit epuisee, soit perimee, soit en rupture, ......
+	constraint pk_situation primary key(num_situation),
+	constraint fk foreign key(code_approvisionnement) references t_approvisionnement(code_approvisionnement) on delete cascade on update cascade
+)
+go
+create procedure afficher_situation_stock
+as
+select
+	t_approvisionnement.code_approvisionnement as 'Code Approvisionnement', 
+	t_approvisionnement.code_produit as 'Code Produit', 
+	t_produit.designation_produit as 'Designation',
+	t_approvisionnement.code_fournisseur as 'Fournisseur', 
+	t_produit.code_categorie as 'Categorie',
+	t_approvisionnement.date_approvisionnement as 'Date Entree', 
+	t_approvisionnement.date_expiration as 'Expiration',	 
+    t_approvisionnement.quantite as 'Quantite Initiale',	
+	t_approvisionnement.ugs as 'UGS',
+	t_situation_stock.qte_restante as 'Quantite Restante',
+	t_situation_stock.status_stock as 'Status Stock',
+	t_situation_stock.date_situation as 'Derniere Date'	
+from           
+	t_approvisionnement inner join
+                t_produit on t_approvisionnement.code_produit = t_produit.code_produit inner join
+                        t_situation_tock on t_approvisionnement.code_approvisionnement = t_situation_tock.code_approvisionnement
+	order by
+		t_approvisionnement.date_approvisionnement asc,  t_situation_stock.date_situation desc
+go
 --------------------------------------------------------------fin codes approvisionnement------------------------------------------
 
 ------------------------------------Debut codes de la commande-------------------------------------------------------------
 
-go
 create table t_commandes
 	(
 	num_commande int identity,
@@ -813,6 +925,33 @@ as
 		where
 			num_commande like @num_commande
 go
+create procedure compteur_commande
+@status_commande nvarchar(50)
+as
+	select 
+		count(distinct num_commande)
+	from t_commandes
+		where
+			status_commande like @status_commande
+go
+create procedure commande_en_cours
+@status_commande nvarchar(50)
+as
+	select top 50
+		num_commande as "Commande No",
+		code_produit as "Produit",
+		qte as "QTE",
+		alerte_level as "Level",
+		date_commande as "Date Commande",
+		date_souhaitee as "Date Souhaitee",
+		status_commande as "Status Commandes",
+		id_structure as "Strucuture",
+		description_commande as "Description"
+	from t_commandes
+		where
+			status_commande like @status_commande
+		order by num_commande desc
+go
 --------------------------------------------
 create procedure supprimer_commande
 @num_commande int
@@ -843,8 +982,7 @@ as
 	insert into t_transporteur 
 		(code_transporteur, descr_transporteur, num_phone, adresse_transporteur)
 	values
-		(@code_transporteur, @descr_transporteur, @num_phone, @adresse_transporteur);
-
+		(@code_transporteur, @descr_transporteur, @num_phone, @adresse_transporteur)
 go
 create table t_distribution
 	(
